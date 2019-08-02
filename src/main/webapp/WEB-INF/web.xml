@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<web-app version="2.5" xmlns="http://java.sun.com/xml/ns/javaee"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://java.sun.com/xml/ns/javaee http://java.sun.com/xml/ns/javaee/web-app_2_5.xsd" metadata-complete="true">
+    
+   	<!-- kisso 初始化 这里使用 KissoJfinalPlugin 插件初始化   -->
+	<context-param>
+		<param-name>kissoConfigLocation</param-name>
+		<param-value>classpath:sso.properties</param-value>
+	</context-param>
+    <listener>
+        <listener-class>com.baomidou.kisso.web.KissoConfigListener</listener-class>
+    </listener>
+ 
+    
+	<!-- SSOFilter 这里使用 SSOJfinalInterceptor 拦截	-->
+	<filter>
+		<filter-name>SSOFilter</filter-name>
+		<filter-class>com.baomidou.kisso.web.filter.SSOFilter</filter-class>
+		<init-param>
+			<param-name>over.url</param-name>
+			<param-value>/login;/verify;/res/</param-value>
+		</init-param>
+	</filter>
+	<filter-mapping>
+		<filter-name>SSOFilter</filter-name>
+		<url-pattern>/*</url-pattern>
+	</filter-mapping>
+
+	
+    <!-- jfinal -->
+    <filter>
+		<filter-name>jfinal</filter-name>
+		<filter-class>com.jfinal.core.JFinalFilter</filter-class>
+		<init-param>
+			<param-name>configClass</param-name>
+			<param-value>com.baomidou.kisso.jfinal.DemoConfig</param-value>
+		</init-param>
+	</filter>
+	<filter-mapping>
+		<filter-name>jfinal</filter-name>
+		<url-pattern>/*</url-pattern>
+	</filter-mapping>
+</web-app>
