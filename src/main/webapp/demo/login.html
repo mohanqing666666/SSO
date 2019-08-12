@@ -1,7 +1,7 @@
 ﻿<!DOCTYPE html>
 <html class="login-alone">
 <head>
-<title>Kisso-jfinal</title>
+<title>单点登陆总指挥</title>
 <meta http-equiv="content-type" content="text/html; charset=UTF-8" />
 <link type="image/x-icon" rel="shortcut icon" href="/res/favicon.ico" />
 <link rel="stylesheet" type="text/css" href="/res/css/screen.css">
@@ -9,18 +9,18 @@
 </head>
   <body>
       <div class="logina-logo" style="height: 109px">
-      <span style="font-size: 45px;">单点登陆总指挥</span>
+      <span style="font-size: 45px;">单点登陆认证中心</span>
     </div>
     <div class="logina-main main clearfix">
         <div class="tab-con">
-            <form id="form-login" method="post" action="/login">
+            <form id="form-login" method="post" style="margin-left: 210px;" action="/login">
                 <div id='login-error' class="error-tip"></div>
                 <table border="0" cellspacing="0" cellpadding="0">
                     <tbody>
                         <tr>
                             <th>账户</th>
                             <td width="245">
-                                <input type="text" name="username" placeholder="电子邮箱/手机号" autocomplete="off" value=""></td>
+                                <input type="text" name="name" placeholder="电子邮箱/手机号" autocomplete="off" value=""></td>
                             <td>
                             </td>
                         </tr>
@@ -30,6 +30,7 @@
                                 <input type="password" name="password" placeholder="请输入密码" autocomplete="off">
                             </td>
                             <td>
+                            	<input type="hidden" name="ReturnURL" value="${(ReturnURL)!}"  >
                             </td>
                         </tr>
                         <tr id="tr-vcode">
@@ -64,9 +65,9 @@
                 <input type="hidden" name="refer" value="site/">
             </form>
         </div>
-         <div class="reg">
+      <!--    <div class="reg">
             <a class="reg-btn" href="#">立即免费注册</a>
-        </div> 
+        </div> --> 
     </div>
     <div id="footer">
         <div class="copyright">© 竞业达</div>

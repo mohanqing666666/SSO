@@ -1,114 +1,153 @@
-/**
- * Copyright (c) 2011-2014, hubin (243194995@qq.com).
- *
- * Licensed under the Apache License, Version 2.0 (the "License"); you may not
- * use this file except in compliance with the License. You may obtain a copy of
- * the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
- * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
- * License for the specific language governing permissions and limitations under
- * the License.
- */
 package com.baomidou.kisso.jfinal;
 
-import com.baomidou.kisso.MyToken;
-import com.baomidou.kisso.Res;
+import java.util.HashMap;
+import java.util.Map;
+import org.apache.commons.lang3.StringUtils;
+import com.baomidou.kisso.AuthToken;
+import com.baomidou.kisso.SSOConfig;
 import com.baomidou.kisso.SSOHelper;
-import com.baomidou.kisso.common.IpHelper;
+import com.baomidou.kisso.SSOToken;
+import com.baomidou.kisso.Token;
+import com.baomidou.kisso.common.SSOProperties;
 import com.baomidou.kisso.common.util.HttpUtil;
 import com.baomidou.kisso.web.waf.request.WafRequestWrapper;
 import com.jfinal.core.Controller;
+import com.jfinal.kit.JsonKit;
+
 
 /**
  * 登录
  */
 public class LoginController extends Controller {
-
+	/**
+	 * 
+	
+	* <p>Title: LoginController.java</p>  
+	
+	* <p>Description:认证中心登录验证 </p>  
+	
+	
+	* @author moshuai
+	
+	* @date 2019年8月11日
+	 */
 	public void index() {
-		MyToken mt = SSOHelper.getToken(getRequest());
-		if ( mt != null ) {
-			redirect("/");
-			return;
-		}
-
-		/**
-		 * 登录 生产环境需要过滤sql注入
-		 */
-		if ( HttpUtil.isPost(getRequest()) ) {
-			WafRequestWrapper req = new WafRequestWrapper(getRequest());
-			String username = req.getParameter("username");
-			String password = req.getParameter("password");
-			if ( "kisso".equals(username) && "123".equals(password) ) {
-				/**
-				 * 系统定义 SSOToken st = new SSOToken();
-				 * <p>
-				 * 自定义 MyToken
-				 * </p>
+		String returnUrl=this.getPara(SSOConfig.getInstance().getParamReturl());//因为XXXXX处记录了，所以此处可以取到。
+		Token token = SSOHelper.getToken(getRequest());
+		if (token == null) {
+			/**
+			 * 正常登录 需要过滤sql及脚本注入
+			 */
+			WafRequestWrapper wr = new WafRequestWrapper(getRequest());
+			String name = wr.getParameter("name");
+			String password = wr.getParameter("password");
+			if ("moshuai".equals(name) && "123456".equals(password)) {
+				/*
+				 * 设置登录 Cookie
+				 * 最后一个参数 true 时添加 cookie 同时销毁当前 JSESSIONID 创建信任的 JSESSIONID
 				 */
-				mt = new MyToken();
-				mt.setId(1000L);
-				mt.setUid("1000");
-				mt.setAbc(" MyToken abc 测试 ...");
-				mt.setIp(IpHelper.getIpAddr(getRequest()));
-				
-				//记住密码，设置 cookie 时长 1 周 = 604800 秒 【动态设置 maxAge 实现记住密码功能】
-				//String rememberMe = req.getParameter("rememberMe");
-				//if ( "on".equals(rememberMe) ) {
-				//	request.setAttribute(SSOConfig.SSO_COOKIE_MAXAGE, 604800); 
-				//}
-				
-				SSOHelper.setSSOCookie(getRequest(), getResponse(), mt, true);
-				redirect("/");
-				return;
+				SSOToken st = new SSOToken(getRequest(), name);
+				SSOHelper.setSSOCookie(getRequest(), getResponse(), st, true);
+				// 重定向到指定地址 returnUrl
+				if (StringUtils.isEmpty(returnUrl)) {
+					returnUrl = "/demo/index.html";
+				} else {
+					returnUrl = HttpUtil.decodeURL(returnUrl);
+				}
+				redirect(returnUrl);
+				 return;
+			}else {
+					if (StringUtils.isNotEmpty(returnUrl)) {
+					//	model.addAttribute("ReturnURL", returnUrl);
+						setAttr("ReturnURL", returnUrl);
+					}
+					render("login.html");
+					 return;
 			}
+		}else {
+			if (StringUtils.isEmpty(returnUrl)) {
+				returnUrl = "/demo/index.html";
+//				setAttr("userId", token.getUid());
+			}
+			 redirect(returnUrl);
+			 return;
 		}
-		render("login.html");
+		
+	//	render("login.html");
 	}
+	
+	
 
 
 	/**
-	 * <p>
-	 * 支持APP端登录
-	 * <br>
-	 * 调用时需要为请求Header设置PLATFORM=APP
-	 * 否则请求将不会被kisso处理，而直接视为jFinal的controller
-	 * </p>
 	 * 
-	 * @author 成都瘦人  lendo.du@gmail.com
-	 * 
+	
+	* <p>Title: LoginController.java</p>  
+	
+	* <p>Description: token消息分发验证</p>  
+	
+	
+	* @author moshuai
+	
+	* @date 2019年8月11日
 	 */
-	public void auth() {
-		Res res = new Res();
-		MyToken token = (MyToken) SSOHelper.getToken(getRequest());
-		if ( token != null ) {
-			renderJson(res);
-			return;
-		} else {
-			if ( HttpUtil.isPost(getRequest()) ) {
-				WafRequestWrapper req = new WafRequestWrapper(getRequest());
-				String username = req.getParameter("username");
-				String password = req.getParameter("password");
-				if ( "admin".equals(username) && "admin".equals(password) ) {
-					token = new MyToken();
-					token.setUid("1000");
-					token.setAbc(" MyToken abc 测试 ...");
-					token.setIp(IpHelper.getIpAddr(getRequest()));
-					SSOHelper.setSSOCookie(getRequest(), getResponse(), token, true);
-					res.setData("已下发Cookies至响应");
-					renderJson(res);
-					return;
+	public void replylogin() {
+		StringBuffer replyData = new StringBuffer();
+	//	replyData.append(getRequest().getParameter("callback")).append("({\"msg\":\"");
+		Token token = SSOHelper.getToken(getRequest());
+		String callback = getRequest().getParameter("callback"); 
+		Map json=new HashMap();
+		if (token != null) {
+			String askData = getRequest().getParameter("askData");
+			if (askData != null && !"".equals(askData)) {
+				/**
+				 * 
+				 * 用户自定义配置获取
+				 * 
+				 * <p>
+				 * 由于不确定性，kisso 提倡，用户自己定义配置。
+				 * </p>
+				 * 
+				 */
+				SSOProperties prop = SSOConfig.getSSOProperties();
+				
+				//下面开始验证票据，签名新的票据每一步都必须有。
+				AuthToken at = SSOHelper.replyCiphertext(getRequest(), askData);
+				if (at != null) {
+					//1、业务系统公钥验证签名合法性（此处要支持多个跨域端，取 authToken 的 app 名找到对应系统公钥验证签名）
+					at = at.verify(prop.get("sso.defined." + at.getApp() + "_public_key"));
+					if (at != null) {
+						
+						//at.getUuid() 作为 key 设置 authToken 至分布式缓存中，然后 sso 系统二次验证
+						//at.setData(data); 设置自定义信息，当然你也可以直接 at.setData(token.jsonToken()); 把当前 SSOToken 传过去。
+						
+						at.setUid(token.getUid());//设置绑定用户ID
+						at.setTime(token.getTime());//设置登录时间
+						
+						//2、SSO 的私钥签名
+						at.sign(prop.get("sso.defined.sso_private_key"));
+						
+						//3、生成回复密文票据
+//						replyData.append(at.encryptAuthToken());
+						 json.put("msg",at.encryptAuthToken());
+					} else {
+						//非法签名, 可以重定向至无权限界面，自己处理
+						replyData.append("-2");
+					}
 				} else {
-					renderError(401);
-					return;
+					//非法签名, 可以重定向至无权限界面，自己处理
+					replyData.append("-2");
 				}
-			} else {
-				renderError(401);
-				return;
+			}else {
+				// 未登录
+				replyData.append("-1");
 			}
+          String jsonp = callback+"("+ JsonKit.toJson(json)+")";//返回的json 格式要加callback()
+          renderJson(jsonp); 
+			
 		}
+		
 	}
+	
+
 }

@@ -25,7 +25,11 @@
 			  <version>2.3</version>
 			  <scope>compile</scope>
 		</dependency>
-
+		<dependency>
+		    <groupId>org.apache.commons</groupId>
+		    <artifactId>commons-lang3</artifactId>
+		    <version>3.4</version>
+		</dependency>
 		<!-- kisso begin -->
 		<dependency>
 			<groupId>com.baomidou</groupId>
